@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import type { ArticleMetadata } from '../../lib/types'
+import { getImageFormatFromDataUrl } from '../../lib/utils'
 import type { ThemeColors } from './config'
 
 // --- TITLE PAGE DISPATCHER ---
@@ -134,7 +135,7 @@ const renderTitlePageModern = (
             const imgProps = doc.getImageProperties(coverImage)
             const imgRatio = imgProps.height / imgProps.width
             const imgH = config.pageWidth * imgRatio
-            doc.addImage(coverImage, 'JPEG', 0, currentY, config.pageWidth, imgH)
+            doc.addImage(coverImage, getImageFormatFromDataUrl(coverImage), 0, currentY, config.pageWidth, imgH)
             
             // Add a subtle gradient overlay or border if possible, essentially just space
             currentY += imgH + 20
@@ -330,7 +331,7 @@ const renderCoverImage = (doc: jsPDF, img: string, y: number, w: number, config:
         const h = w * ratio
         // If x is 0, imply full width standard logic which might be 0 or config.margin depending on call
         // But here we accept direct X
-        doc.addImage(img, 'JPEG', x, y, w, h)
+        doc.addImage(img, getImageFormatFromDataUrl(img), x, y, w, h)
         return y + h
     } catch (e) { return y }
 }

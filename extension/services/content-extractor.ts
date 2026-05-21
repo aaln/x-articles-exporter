@@ -13,30 +13,51 @@ async function waitForImage(img: HTMLImageElement, timeoutMs = 1500): Promise<vo
   })
 }
 
+function findScrollContainer(el: Element): Element {
+  let node: Element | null = el
+  while (node && node !== document.documentElement) {
+    const style = window.getComputedStyle(node)
+    const canScroll = ['auto', 'scroll', 'overlay'].includes(style.overflowY)
+      && node.scrollHeight > node.clientHeight + 1
+    if (canScroll) return node
+    node = node.parentElement
+  }
+  return document.scrollingElement || document.documentElement
+}
+
 /**
  * Scrolls through the article so X lazy-loads tweetPhoto nodes and image bytes.
  */
 async function preloadArticleImages(container: Element, onProgress?: (status: string) => void): Promise<void> {
-  const originalScrollY = window.scrollY
-  const step = Math.max(window.innerHeight * 0.8, 400)
-  const maxScroll = document.documentElement.scrollHeight
+  const scrollEl = findScrollContainer(container)
+  const originalScrollTop = scrollEl.scrollTop
+  const originalWindowY = window.scrollY
+  const step = Math.max(scrollEl.clientHeight * 0.8, 400)
+  const maxScroll = Math.max(
+    scrollEl.scrollHeight - scrollEl.clientHeight,
+    document.documentElement.scrollHeight - window.innerHeight
+  )
 
   onProgress?.('Loading article images...')
   for (let y = 0; y <= maxScroll; y += step) {
+    scrollEl.scrollTop = y
     window.scrollTo(0, y)
-    await new Promise(resolve => setTimeout(resolve, 250))
+    await new Promise(resolve => setTimeout(resolve, 300))
   }
 
   const photos = Array.from(container.querySelectorAll('[data-testid="tweetPhoto"]'))
+  onProgress?.(`Loading ${photos.length} images...`)
+
   for (const photo of photos) {
-    photo.scrollIntoView({ block: 'center' })
-    await new Promise(resolve => setTimeout(resolve, 150))
+    photo.scrollIntoView({ block: 'center', behavior: 'instant' })
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     const img = photo.querySelector('img')
     if (img) await waitForImage(img)
   }
 
-  window.scrollTo(0, originalScrollY)
+  scrollEl.scrollTop = originalScrollTop
+  window.scrollTo(0, originalWindowY)
 }
 
 /**
