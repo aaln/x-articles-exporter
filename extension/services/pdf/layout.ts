@@ -41,8 +41,8 @@ const renderTitlePageStandard = (
   doc.setFillColor(config.showSidebar ? colors.sidebar : colors.bg)
   doc.rect(0, 0, config.pageWidth, config.pageHeight, 'F')
   
-  const TITLE_START_X = config.margin + 10
-  let currentY = config.margin + 30
+  const TITLE_START_X = config.margin + 6
+  let currentY = config.margin + 12
   
   // Use high contrast for Standard (Sidebar dark/light) vs simple background
   const titlePageTextSecondary = config.showSidebar ? '#E5E7EB' : colors.secondary
@@ -50,33 +50,33 @@ const renderTitlePageStandard = (
   
   // Author
   doc.setFont(fonts.ui, 'normal') 
-  doc.setFontSize(11)
+  doc.setFontSize(8)
   doc.setTextColor(titlePageTextSecondary)
-  doc.text(metadata.author.toUpperCase(), TITLE_START_X, currentY, { charSpace: 1.5 })
-  currentY += 15
+  doc.text(metadata.author.toUpperCase(), TITLE_START_X, currentY, { charSpace: 1 })
+  currentY += 8
   
   // Title
   doc.setFont(fonts.title, 'bold')
-  const titleFontSize = metadata.title.length > 80 ? 32 : 42
+  const titleFontSize = metadata.title.length > 80 ? 18 : 22
   doc.setFontSize(titleFontSize)
   doc.setTextColor(titlePageTextMain)
   
   const TITLE_X_OFFSET = 12
   const MAX_TITLE_WIDTH = config.pageWidth - TITLE_START_X - 10 - TITLE_X_OFFSET
   const titleLines = doc.splitTextToSize(metadata.title.toUpperCase(), MAX_TITLE_WIDTH)
-  const titleBlockHeight = titleLines.length * (titleFontSize * 0.3527 * 1.15)
+  const titleBlockHeight = titleLines.length * (titleFontSize * 0.3527 * 1.1)
   
   // Accent Bar
   doc.setFillColor(colors.accent)
-  doc.rect(TITLE_START_X, currentY - 8, 4, titleBlockHeight + 2, 'F') 
-  doc.text(titleLines, TITLE_START_X + TITLE_X_OFFSET, currentY)
+  doc.rect(TITLE_START_X, currentY - 4, 3, titleBlockHeight + 1, 'F') 
+  doc.text(titleLines, TITLE_START_X + 8, currentY)
   
-  currentY += titleBlockHeight + 20
+  currentY += titleBlockHeight + 10
   
   // Cover Image
   if (coverImage) {
      currentY = renderCoverImage(doc, coverImage, currentY, config.pageWidth, config)
-     currentY += 20
+     currentY += 8
   }
   
   // Metadata & Footer
@@ -109,7 +109,7 @@ const renderTitlePageModern = (
 
     // MASSIVE CENTERED TITLE
     doc.setFont(fonts.title, 'bold')
-    const titleFontSize = metadata.title.length > 60 ? 42 : 54
+    const titleFontSize = metadata.title.length > 60 ? 24 : 30
     doc.setFontSize(titleFontSize)
     doc.setTextColor(colors.text)
 
@@ -549,18 +549,18 @@ export const generateTOC = (
     tocPagesCount: number
 ) => {
     let currentTocPage = 0
-    let tocY = config.margin + 10
+    let tocY = config.margin + 6
     
     doc.setPage(2)
     // TOC Title
     doc.setFont(fonts.title, 'normal')
-    doc.setFontSize(32)
+    doc.setFontSize(14)
     doc.setTextColor(colors.text)
     doc.text('TABLE OF CONTENTS', config.contentStart, tocY)
-    tocY += 25
+    tocY += 10
     
     doc.setFont(fonts.body, 'normal')
-    doc.setFontSize(12)
+    doc.setFontSize(8)
     
     tocEntries.forEach((entry, i) => {
         // Check for page break within TOC pages
@@ -570,7 +570,7 @@ export const generateTOC = (
             const nextPageIndex = 2 + currentTocPage
             if (nextPageIndex <= 1 + tocPagesCount) {
                doc.setPage(nextPageIndex)
-               tocY = config.margin + 20
+               tocY = config.margin + 8
             }
         }
         
