@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import type { ContentBlock, TextSegment } from '../../lib/types'
+import { getImageFormatFromDataUrl } from '../../lib/utils'
 import type { ThemeColors } from './config'
 import { splitTextToWidth } from './utils'
 
@@ -119,9 +120,10 @@ export const renderImageBlock = (ctx: RenderContext, block: ContentBlock, x: num
             ctx.currentY = ctx.onPageBreak(ctx.currentY)
         }
         
-        ctx.doc.addImage(block.src, 'JPEG', x, ctx.currentY, w, h)
+        ctx.doc.addImage(block.src, getImageFormatFromDataUrl(block.src), x, ctx.currentY, w, h)
         return ctx.currentY + h + 10
     } catch (e) {
+        console.warn('[X Articles Exporter] Failed to render image block:', e)
         return ctx.currentY
     }
 }
@@ -141,7 +143,7 @@ export const renderVideoBlock = (ctx: RenderContext, block: ContentBlock, x: num
         }
 
         // Draw Poster
-        ctx.doc.addImage(block.src, 'JPEG', x, ctx.currentY, w, h)
+        ctx.doc.addImage(block.src, getImageFormatFromDataUrl(block.src), x, ctx.currentY, w, h)
         
         // Draw Play Overlay
         ctx.doc.setFillColor(0, 0, 0)

@@ -16,6 +16,55 @@ export function sanitizeText(text: string): string {
  * @param {string} text - Text to display on the placeholder.
  * @returns {string} Base64 data URL of the generated placeholder image.
  */
+const BACKGROUND_IMAGE_URL_RE = /url\(["']?(.*?)["']?\)/
+
+export function normalizeTwitterImageUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('twimg.com')) {
+      parsed.searchParams.set('name', 'large')
+    }
+    return parsed.toString()
+  } catch {
+    return url.replace(/name=(small|medium|thumb)/, 'name=large')
+  }
+}
+
+function extractBackgroundImageUrl(el: HTMLElement | null): string | null {
+  if (!el) return null
+  const inlineMatch = el.style.backgroundImage.match(BACKGROUND_IMAGE_URL_RE)
+  if (inlineMatch?.[1]) return inlineMatch[1]
+
+  const computedMatch = window.getComputedStyle(el).backgroundImage.match(BACKGROUND_IMAGE_URL_RE)
+  return computedMatch?.[1] || null
+}
+
+export function resolveTweetPhotoUrl(photo: Element): string | null {
+  const root = photo.matches('[data-testid="tweetPhoto"]')
+    ? photo
+    : photo.closest('[data-testid="tweetPhoto"]') || photo
+
+  const img = root.querySelector('img') as HTMLImageElement | null
+  const bgEl = root.querySelector('[style*="background-image"]') as HTMLElement | null
+  const bgUrl = extractBackgroundImageUrl(bgEl)
+    || extractBackgroundImageUrl(root as HTMLElement)
+
+  const src = img?.currentSrc || img?.src
+  const isPlaceholder = !src
+    || src.startsWith('data:image/gif')
+    || src === window.location.href
+
+  const url = (!isPlaceholder ? src : null) || bgUrl
+  return url ? normalizeTwitterImageUrl(url) : null
+}
+
+export function getImageFormatFromDataUrl(src: string): 'JPEG' | 'PNG' | 'WEBP' | 'GIF' {
+  if (src.startsWith('data:image/png')) return 'PNG'
+  if (src.startsWith('data:image/webp')) return 'WEBP'
+  if (src.startsWith('data:image/gif')) return 'GIF'
+  return 'JPEG'
+}
+
 export function createPlaceholderImage(text: string = 'Image Failed'): string {
   try {
     const canvas = document.createElement('canvas')
@@ -64,10 +113,11 @@ export function createPlaceholderImage(text: string = 'Image Failed'): string {
  * @returns {Promise<string | null>} Base64 string or null/placeholder on failure.
  */
 export async function convertImageToBase64(url: string, retries = 3): Promise<string | null> {
+  const normalizedUrl = normalizeTwitterImageUrl(url)
   let attempt = 0
   while (attempt < retries) {
     try {
-      const response = await fetch(url)
+      const response = await fetch(normalizedUrl)
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
       
       const blob = await response.blob()
